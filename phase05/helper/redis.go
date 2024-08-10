@@ -3,6 +3,7 @@ package helper
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 
 	"github.com/redis/go-redis/v9"
@@ -21,13 +22,16 @@ func initRedisClient() *redis.Client {
 	})
 }
 
-func StoreResults[T any](key string, data []T) {
+func StoreResults[T any](key string, data []T) error {
 	jsonData, _ := json.Marshal(data)
 
 	err := client.Set(ctx, key, jsonData, 0).Err()
 	if err != nil {
 		log.Printf("Could not set data on redis: %v", err)
+		return fmt.Errorf("could not set data on redis: %w", err)
 	}
+
+	return nil
 }
 
 func RetrieveResults[T any](key string) ([]T, error) {

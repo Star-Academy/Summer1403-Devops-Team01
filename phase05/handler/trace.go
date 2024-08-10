@@ -29,10 +29,13 @@ func Trace(c *gin.Context) {
 	traceResponses, err := trace.PerformTrace(ipAddr)
 	if err != nil {
 		c.IndentedJSON(http.StatusInternalServerError, nil)
-
-		fmt.Println("[Trace handler] [Info]: Storing results")
-		helper.StoreResults(host, traceResponses)
-	} else {
-		c.IndentedJSON(http.StatusOK, traceResponses)
+		return
 	}
+
+	fmt.Println("[Trace handler] [Info]: Storing results")
+	err = helper.StoreResults(host, traceResponses)
+	if err != nil {
+		fmt.Printf("[Trace handler] [Error] Redis: %v", err)
+	}
+	c.IndentedJSON(http.StatusOK, traceResponses)
 }
