@@ -1,8 +1,8 @@
 package handler
 
 import (
-	"net/http"
 	"fmt"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 
@@ -26,10 +26,13 @@ func Trace(c *gin.Context) {
 	}
 
 	fmt.Println("[Trace handler] [Info]: Performing trace")
-	traceResponses := trace.PerformTrace(ipAddr)
+	traceResponses, err := trace.PerformTrace(ipAddr)
+	if err != nil {
+		c.IndentedJSON(http.StatusInternalServerError, nil)
 
-	c.IndentedJSON(http.StatusOK, traceResponses)
-
-	fmt.Println("[Trace handler] [Info]: Storing results")
-	helper.StoreResults(host, traceResponses)
+		fmt.Println("[Trace handler] [Info]: Storing results")
+		helper.StoreResults(host, traceResponses)
+	} else {
+		c.IndentedJSON(http.StatusOK, traceResponses)
+	}
 }

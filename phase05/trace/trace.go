@@ -30,20 +30,20 @@ func ResolveIP(host string) (*net.IPAddr, error) {
 	return ipAddr, err
 }
 
-func PerformTrace(ipAddr *net.IPAddr) []TraceResponse {
+func PerformTrace(ipAddr *net.IPAddr) ([]TraceResponse, error) {
 	var traceResponses []TraceResponse
 
 	for ttl := 1; ttl <= MAXTTL; ttl++ {
 		conn, err := icmp.ListenPacket("ip4:icmp", "0.0.0.0")
 		if err != nil {
 			fmt.Println("Error creating socket:", err)
-			return traceResponses
+			return nil, fmt.Errorf("error creating socket: %w", err)
 		}
 		defer conn.Close()
 
 		if err := conn.IPv4PacketConn().SetTTL(ttl); err != nil {
 			fmt.Println("Error setting TTL:", err)
-			return traceResponses
+			return nil, fmt.Errorf("error setting TTL: %w", err)
 		}
 
 		msg := createICMPMessage()
@@ -51,7 +51,7 @@ func PerformTrace(ipAddr *net.IPAddr) []TraceResponse {
 
 		if err := sendICMPMessage(conn, msg, ipAddr); err != nil {
 			fmt.Println("Error sending ICMP message:", err)
-			continue
+			return nil, fmt.Errorf("error sending ICMP message: %w", err)
 		}
 
 		curResponse := receiveICMPResponse(conn, ttl, start)
@@ -60,7 +60,7 @@ func PerformTrace(ipAddr *net.IPAddr) []TraceResponse {
 			break
 		}
 	}
-	return traceResponses
+	return traceResponses, nil
 }
 
 func createICMPMessage() icmp.Message {
